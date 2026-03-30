@@ -1,4 +1,5 @@
 import { Command, Option } from 'clipanion';
+import type { ExtractedData } from '../types/index.js';
 
 export default class LLMEnhanceCommand extends Command {
   public inputFile = Option.String();
@@ -26,8 +27,19 @@ export default class LLMEnhanceCommand extends Command {
 
       const parsed = await parseInputFile(this.inputFile);
       const extracted = extractFromText(parsed.content);
+      const extractedData: ExtractedData = {
+        constraints: extracted.constraints,
+        decisions: extracted.decisions,
+        parameters: [],
+        sources: extracted.sources.map(s => ({ type: s.type, fileName: s.fileName || '' })),
+        roles: Object.fromEntries(
+          Object.entries(extracted.roles || {}).map(([k, v]) => [k, { description: v.description, mentions: String(v.mentions), source: v.source }])
+        ),
+        subjective_judgments: [],
+        ambiguity_notes: [],
+      };
 
-      const enhanced = await enhanceWithLLM(extracted, {
+      const enhanced = await enhanceWithLLM(extractedData, {
         apiUrl: this.apiUrl,
         model: this.model,
       });

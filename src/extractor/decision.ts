@@ -54,16 +54,15 @@ function extractIfThenDecision(sentence: string, counter: number): Decision | nu
         inputVars: [condition],
         outputVars: ['action'],
         rules: [{
-          condition,
-          output: { action },
+          when: { condition },
+          then: { action },
         }],
       };
     }
 
     const rules: DecisionRule[] = options.map((option, idx) => ({
-      condition: `${condition} 且选择${idx + 1}`,
-      output: { action: option.trim(), chosen: true },
-      priority: idx + 1,
+      when: { condition: `${condition} 且选择${idx + 1}` },
+      then: { action: option.trim() },
     }));
 
     return {
@@ -86,16 +85,15 @@ function extractIfThenDecision(sentence: string, counter: number): Decision | nu
       inputVars: [condition],
       outputVars: ['action'],
       rules: [{
-        condition,
-        output: { action },
+        when: { condition },
+        then: { action },
       }],
     };
   }
 
   const rules: DecisionRule[] = options.map((option, idx) => ({
-    condition: `${condition} 且选择${idx + 1}`,
-    output: { action: option.trim(), chosen: true },
-    priority: idx + 1,
+    when: { condition: `${condition} 且选择${idx + 1}` },
+    then: { action: option.trim() },
   }));
 
   return {
@@ -128,8 +126,8 @@ function extractTableBasedDecision(sentence: string, counter: number): Decision 
       const action = cells[cells.length - 1].trim();
       conditions.push(condition);
       rules.push({
-        condition,
-        output: { action },
+        when: { condition },
+        then: { action },
       });
     }
   }

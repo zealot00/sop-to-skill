@@ -1,4 +1,5 @@
 import { Command, Option } from 'clipanion';
+import type { ExtractedData } from '../types/index.js';
 
 export default class GenerateCommand extends Command {
   public verbose = Option.Boolean('-v,--verbose', false);
@@ -25,9 +26,20 @@ export default class GenerateCommand extends Command {
 
       const parsed = await parseInputFile(this.inputFile);
       const extracted = extractFromText(parsed.content);
+      const extractedData: ExtractedData = {
+        constraints: extracted.constraints,
+        decisions: extracted.decisions,
+        parameters: [],
+        sources: extracted.sources.map(s => ({ type: s.type, fileName: s.fileName || '' })),
+        roles: Object.fromEntries(
+          Object.entries(extracted.roles || {}).map(([k, v]) => [k, { description: v.description, mentions: String(v.mentions), source: v.source }])
+        ),
+        subjective_judgments: [],
+        ambiguity_notes: [],
+      };
 
       const skillName = this.name || parsed.metadata.title || 'Untitled Skill';
-      const skillPackage = await generateSkillPackage(extracted, skillName, {
+      const skillPackage = await generateSkillPackage(extractedData, skillName, {
         sourceFile: this.inputFile,
       });
 

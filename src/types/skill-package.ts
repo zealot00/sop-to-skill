@@ -37,9 +37,26 @@ export interface Decision {
  * Decision Rule - a single rule within a decision
  */
 export interface DecisionRule {
-  condition: string;
-  output: Record<string, unknown>;
+  when: Record<string, string>;
+  then: Record<string, string>;
   priority?: number;
+}
+
+export interface Parameter {
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'enum';
+  description: string;
+  minValue?: number;
+  maxValue?: number;
+  defaultValue?: any;
+  unit?: string;
+}
+
+export interface Source {
+  type: 'sop' | 'policy' | 'guideline';
+  fileName: string;
+  section?: string;
+  url?: string;
 }
 
 /**

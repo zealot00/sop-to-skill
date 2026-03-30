@@ -1,4 +1,4 @@
-import type { ExtractedData, LLMEnhancement } from '../types/index.js';
+import type { ExtractedData } from '../types/index.js';
 
 export interface LLMConfig {
   apiUrl: string;
@@ -18,6 +18,14 @@ export interface EnhancementResult {
 export interface LLMOptions {
   apiUrl: string;
   model: string;
+}
+
+interface LLMEnhancement {
+  enhanced_data: ExtractedData;
+  suggestions: any[];
+  warnings: any[];
+  model: string;
+  processing_time_ms: number;
 }
 
 export async function enhanceWithLLM(

@@ -1,0 +1,468 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sop-to-skill.dev/skill-schema.json",
+  "title": "Skill Package Schema",
+  "description": "Schema for AI Agent Skill Packages converted from SOPs",
+  "type": "object",
+  "required": ["schema", "manifest"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "$ref": "#/definitions/SkillSchema"
+    },
+    "manifest": {
+      "$ref": "#/definitions/Manifest"
+    }
+  },
+  "definitions": {
+    "SkillSchema": {
+      "type": "object",
+      "required": ["meta", "triggers", "steps", "constraints"],
+      "additionalProperties": false,
+      "properties": {
+        "meta": {
+          "$ref": "#/definitions/SkillMeta"
+        },
+        "triggers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Trigger"
+          },
+          "minItems": 1
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Step"
+          },
+          "minItems": 1
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Constraint"
+          },
+          "minItems": 0
+        },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Decision"
+          }
+        },
+        "error_handling": {
+          "$ref": "#/definitions/ErrorHandling"
+        }
+      }
+    },
+    "SkillMeta": {
+      "type": "object",
+      "required": ["name", "version", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "author": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "icon": {
+          "type": "string"
+        }
+      }
+    },
+    "Trigger": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["execution", "query", "approval", "event"]
+        },
+        "description": {
+          "type": "string"
+        },
+        "condition": {
+          "type": "string"
+        }
+      }
+    },
+    "Step": {
+      "type": "object",
+      "required": ["id", "name", "description", "action"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^STEP-[A-Z0-9]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "condition": {
+          "type": "string"
+        },
+        "input": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/StepInput"
+          }
+        },
+        "output": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/StepOutput"
+          }
+        },
+        "next_step_on_success": {
+          "type": "string"
+        },
+        "next_step_on_failure": {
+          "type": "string"
+        }
+      }
+    },
+    "StepInput": {
+      "type": "object",
+      "required": ["name", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "default": {}
+      }
+    },
+    "StepOutput": {
+      "type": "object",
+      "required": ["name", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "Constraint": {
+      "type": "object",
+      "required": ["id", "level", "description", "roles", "confidence"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^CONST-[A-Z0-9]+$"
+        },
+        "level": {
+          "type": "string",
+          "enum": ["MUST", "SHOULD", "MAY"]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "condition": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "validation": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "Decision": {
+      "type": "object",
+      "required": ["id", "name", "inputVars", "outputVars", "rules"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^DEC-[A-Z0-9]+$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "inputVars": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "outputVars": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DecisionRule"
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "DecisionRule": {
+      "type": "object",
+      "required": ["condition", "output"],
+      "additionalProperties": false,
+      "properties": {
+        "condition": {
+          "type": "string"
+        },
+        "output": {
+          "type": "object"
+        },
+        "priority": {
+          "type": "number"
+        }
+      }
+    },
+    "ErrorHandling": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "strategies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ErrorStrategy"
+          }
+        },
+        "fallback_steps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ErrorStrategy": {
+      "type": "object",
+      "required": ["error_type", "action"],
+      "additionalProperties": false,
+      "properties": {
+        "error_type": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "recovery_step": {
+          "type": "string"
+        }
+      }
+    },
+    "Manifest": {
+      "type": "object",
+      "required": ["format_version", "generated_at", "generator"],
+      "additionalProperties": false,
+      "properties": {
+        "format_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "generator": {
+          "type": "string"
+        },
+        "source_sop": {
+          "type": "string"
+        },
+        "validation_status": {
+          "type": "string",
+          "enum": ["pending", "validated", "failed"]
+        },
+        "test_cases_count": {
+          "type": "number"
+        }
+      }
+    },
+    "TestCase": {
+      "type": "object",
+      "required": ["id", "name", "description", "type", "enabled", "steps", "input_variables", "expected_results"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^TEST-[A-Z0-9]+$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["happy-path", "edge-case", "error-case", "compliance"]
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "input_variables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TestCaseVariable"
+          }
+        },
+        "expected_results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TestCaseExpectedResult"
+          }
+        },
+        "setup": {
+          "type": "string"
+        },
+        "teardown": {
+          "type": "string"
+        },
+        "timeout": {
+          "type": "number"
+        },
+        "retry_count": {
+          "type": "number"
+        }
+      }
+    },
+    "TestCaseVariable": {
+      "type": "object",
+      "required": ["name", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {},
+        "type": {
+          "type": "string"
+        }
+      }
+    },
+    "TestCaseExpectedResult": {
+      "type": "object",
+      "required": ["field", "operator", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "operator": {
+          "type": "string",
+          "enum": ["equals", "not_equals", "contains", "not_contains", "greater_than", "less_than", "exists", "not_exists"]
+        },
+        "value": {}
+      }
+    },
+    "TestSuite": {
+      "type": "object",
+      "required": ["id", "name", "description", "skill_version", "test_cases"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "skill_version": {
+          "type": "string"
+        },
+        "test_cases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TestCase"
+          }
+        },
+        "setup": {
+          "type": "string"
+        },
+        "teardown": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
