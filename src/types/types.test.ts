@@ -9,6 +9,7 @@ import {
   SkillSchema,
   TestCase,
 } from './index.js';
+import { generateSkillPackage } from '../generator/skill-package.js';
 
 describe('Types', () => {
   describe('ConstraintLevel', () => {
@@ -153,22 +154,58 @@ describe('Types', () => {
   describe('TestCase', () => {
     it('should accept valid test case objects', () => {
       const testCase: TestCase = {
-        id: 'T001',
-        name: 'Valid Data Test',
+        case_id: 'T001',
+        skill: 'TestSkill',
         description: 'Test with valid input data',
         type: 'happy-path',
-        enabled: true,
-        steps: ['S001', 'S002'],
-        input_variables: [
-          { name: 'data', value: { amount: 100 }, type: 'object' },
-        ],
-        expected_results: [
-          { field: 'result.status', operator: 'equals', value: 'success' },
-        ],
+        input: { data: { amount: 100 } },
+        expected: { success: true },
+        tags: ['test'],
       };
-      expect(testCase.id).toBe('T001');
+      expect(testCase.case_id).toBe('T001');
       expect(testCase.type).toBe('happy-path');
-      expect(testCase.expected_results).toHaveLength(1);
+    });
+  });
+
+  describe('Schema Consistency', () => {
+    it('should generate schema matching SKILL.schema.json structure', async () => {
+      const extracted = {
+        constraints: [{
+          id: 'C001',
+          level: 'MUST' as const,
+          description: 'Test constraint',
+          roles: ['DMC'],
+          confidence: 0.9
+        }],
+        decisions: [],
+        parameters: [],
+        sources: [],
+        roles: {},
+        subjective_judgments: [],
+        ambiguity_notes: [],
+      };
+
+      const result = await generateSkillPackage(extracted, 'Test Skill', {
+        sourceFile: 'test.md'
+      });
+
+      expect(result).toHaveProperty('schema');
+      expect(result).toHaveProperty('manifest');
+      
+      expect(result.schema).toHaveProperty('meta');
+      expect(result.schema).toHaveProperty('triggers');
+      expect(result.schema).toHaveProperty('steps');
+      expect(result.schema).toHaveProperty('constraints');
+      
+      expect(result.schema.meta.name).toBe('Test Skill');
+      expect(result.schema.meta.version).toBe('1.0.0');
+      expect(result.schema.meta.description).toBe('Generated from test.md');
+      
+      expect(result.schema.constraints).toHaveLength(1);
+      expect(result.schema.constraints[0].id).toBe('C001');
+      
+      expect(result.manifest.format_version).toBe('1.0.0');
+      expect(result.manifest.generator).toBe('sop-to-skill');
     });
   });
 });

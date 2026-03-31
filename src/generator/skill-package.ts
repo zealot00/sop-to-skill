@@ -1,4 +1,4 @@
-import type { ExtractedData, SkillSchema, TriggerType, Constraint, ConstraintLevel } from '../types/index.js';
+import type { ExtractedData, SkillSchema, TriggerType, Constraint, ConstraintLevel, Step, Manifest } from '../types/index.js';
 
 export interface GeneratorOptions {
   sourceFile: string;
@@ -10,33 +10,33 @@ export async function generateSkillPackage(
   extracted: ExtractedData,
   name: string,
   options: GeneratorOptions
-): Promise<{ schema: SkillSchema; manifest: any }> {
+): Promise<{ schema: SkillSchema; manifest: Manifest }> {
   const version = '1.0.0';
   const now = new Date().toISOString();
 
+  // Output nested structure aligned with SKILL.schema.json
   const schema: SkillSchema = {
     meta: {
       name,
       version,
       description: `Generated from ${options.sourceFile}`,
-      source: options.sourceFile,
-      generated_at: now,
     },
     triggers: buildTriggers(),
     steps: buildSteps(extracted),
     constraints: extracted.constraints.map((c) => ({
-      id: c.id || `constraint_${Math.random().toString(36).substr(2, 9)}`,
+      id: c.id || `CONST-${Math.random().toString(36).substr(2, 9)}`,
       level: (c.level || 'SHOULD') as ConstraintLevel,
       description: c.description,
       condition: c.condition,
+      action: c.action,
       roles: c.roles,
-      confidence: c.confidence,
+      confidence: c.confidence || 0.85,
     })) as Constraint[],
     decisions: extracted.decisions as any,
     error_handling: buildErrorHandling(extracted),
   };
 
-  const manifest = {
+  const manifest: Manifest = {
     format_version: '1.0.0',
     generated_at: now,
     generator: 'sop-to-skill',
@@ -54,13 +54,14 @@ function buildTriggers() {
   }];
 }
 
-function buildSteps(extracted: ExtractedData) {
+function buildSteps(extracted: ExtractedData): Step[] {
   const mustConstraints = extracted.constraints.filter((c) => c.level === 'MUST');
-  return mustConstraints.slice(0, 5).map((c, i) => ({
+  return mustConstraints.slice(0, 5).map((c, i): Step => ({
     id: `step_${i + 1}`,
     name: c.condition || `执行约束 ${c.id}`,
     description: c.description,
-    action: `validate_${c.id}`,
+    type: 'condition',
+    condition: c.condition || c.description,
     input: {},
     output: { valid: 'boolean', violations: [] },
     on_failure: i > 0 ? 'abort' : undefined,

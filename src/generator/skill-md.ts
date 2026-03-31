@@ -1,16 +1,21 @@
 import type { SkillSchema } from '../types/index.js';
 
 export function generateSkillMarkdown(schema: SkillSchema): string {
-  const { meta, constraints, steps, triggers } = schema;
+  const name = schema.meta.name;
+  const version = schema.meta.version;
+  const description = schema.meta.description;
+  const generatedAt = new Date().toISOString();
+  const triggers = schema.triggers;
+  const steps = schema.steps;
+  const constraints = schema.constraints;
 
-  let md = `# ${meta.name}\n\n`;
-  md += `**Version**: ${meta.version}\n`;
-  md += `**Generated**: ${meta.generated_at || new Date().toISOString().split('T')[0]}\n`;
-  if (meta.source) md += `**Source**: ${meta.source}\n`;
+  let md = `# ${name}\n\n`;
+  md += `**Version**: ${version}\n`;
+  md += `**Generated**: ${generatedAt.split('T')[0]}\n`;
   md += '\n---\n\n';
 
   md += `## 概述\n\n`;
-  md += `${meta.description || `${meta.name} 是一个标准操作流程 Skill。`}\n\n`;
+  md += `${description || `${name} 是一个标准操作流程 Skill。`}\n\n`;
 
   md += `## 触发条件\n\n`;
   md += `| 类型 | 名称 | 描述 |\n|------|------|------|\n`;

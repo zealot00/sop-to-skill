@@ -5,6 +5,8 @@ export interface ParsedContent {
     version?: string;
     date?: string;
     fileType: 'markdown' | 'pdf' | 'docx' | 'unknown';
+    tablesCount?: number;
+    [key: string]: unknown;
   };
   sections: ParsedSection[];
 }

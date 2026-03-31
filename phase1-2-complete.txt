@@ -1,0 +1,69 @@
+# Phase 1-2 Complete: Parser and Extractor Modules
+
+**Date:** 2026-03-19
+**Status:** ✅ COMPLETE
+
+## Summary
+
+Successfully implemented Phase 1 (Parser) and Phase 2 (Extractor) modules following TDD workflow.
+
+## Phase 1: Parser Module
+
+### Implementation Files
+- `scripts/parser/base.py` - BaseParser abstract class
+- `scripts/parser/markdown_parser.py` - MarkdownParser implementation
+- `scripts/parser/docx_parser.py` - DocxParser implementation
+- `scripts/parser/pdf_parser.py` - PdfParser implementation
+- `scripts/parser/factory.py` - ParserFactory and get_parser_for_file()
+
+### Test Files
+- `tests/test_parsers/__init__.py`
+- `tests/test_parsers/test_markdown_parser.py`
+- `tests/test_parsers/test_docx_parser.py`
+- `tests/test_parsers/test_pdf_parser.py`
+- `tests/test_parsers/test_parser_factory.py`
+
+### Test Results
+- 15 passed, 6 skipped (DOCX/PDF tests skipped due to missing fixture files)
+
+## Phase 2: Extractor Module
+
+### Implementation Files
+- `scripts/extractor/constraint_detector.py` - MUST/SHOULD/MAY constraint detection
+- `scripts/extractor/decision_detector.py` - if-then/when-then pattern detection
+- `scripts/extractor/role_detector.py` - Role extraction from text
+- `scripts/extractor/rule_extractor.py` - Unified RuleExtractor integrating all detectors
+
+### Test Files
+- `tests/test_extractors/__init__.py`
+- `tests/test_extractors/test_constraint_detector.py`
+- `tests/test_extractors/test_decision_detector.py`
+- `tests/test_extractors/test_role_detector.py`
+- `tests/test_extractors/test_rule_extractor.py`
+
+### Test Results
+- 28 passed
+
+## Test Coverage
+
+### Core Test Cases (All Passing)
+1. ✅ test_parse_headings - Heading hierarchy extraction
+2. ✅ test_parse_tables - Table extraction
+3. ✅ test_parse_lists - List item extraction
+4. ✅ test_parser_interface_consistency - All parsers return ParsedDocument
+5. ✅ test_detect_must_constraints - MUST level detection
+6. ✅ test_detect_should_constraints - SHOULD level detection
+7. ✅ test_detect_may_constraints - MAY level detection
+8. ✅ test_detect_if_then_pattern - 如果...则... pattern detection
+9. ✅ test_detect_table_as_decision - Markdown table to decision table
+10. ✅ test_extract_roles - Role extraction from text
+
+## Quality Requirements Met
+- All functions have type annotations
+- All public functions have docstrings
+- Tests use fixtures from tests/conftest.py
+- TDD workflow followed (RED → GREEN → REFACTOR)
+
+## Notes
+- DOCX/PDF parser tests are skipped (require fixture files)
+- Run `pytest tests/test_parsers/ tests/test_extractors/` to verify

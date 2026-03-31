@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { SkillPackageSchema, type ValidatedSkillPackage } from './skill-schema.js';
 
 export interface ValidationIssue {
   type: string;
@@ -11,7 +12,10 @@ export interface ValidationResult {
   valid: boolean;
   score: number;
   issues: ValidationIssue[];
+  data?: ValidatedSkillPackage;
 }
+
+const REQUIRED_FILES = ['SKILL.md', 'skill.schema.json', 'skill.manifest.yaml'];
 
 export async function validateSkillPackage(packagePath: string): Promise<ValidationResult> {
   const issues: ValidationIssue[] = [];
@@ -30,10 +34,7 @@ export async function validateSkillPackage(packagePath: string): Promise<Validat
     return { valid: false, score: 0, issues: [{ type: 'invalid_format', severity: 'error', message: 'Package must be a directory or ZIP file' }] };
   }
 
-  const REQUIRED_FILES = ['SKILL.md', 'skill.schema.json', 'skill.manifest.yaml'];
-  let score = 0;
   let requiredFound = 0;
-
   for (const file of REQUIRED_FILES) {
     try {
       await fs.access(path.join(packagePath, file));
@@ -42,16 +43,36 @@ export async function validateSkillPackage(packagePath: string): Promise<Validat
       issues.push({ type: 'missing_file', severity: 'error', message: `Required file missing: ${file}` });
     }
   }
-  score = requiredFound / REQUIRED_FILES.length;
 
   const schemaPath = path.join(packagePath, 'skill.schema.json');
+  let skillData: any;
+
   try {
     const content = await fs.readFile(schemaPath, 'utf-8');
-    JSON.parse(content);
+    skillData = JSON.parse(content);
   } catch (e: any) {
     issues.push({ type: 'invalid_json', severity: 'error', message: `skill.schema.json is not valid JSON: ${e.message}` });
+    return { valid: false, score: requiredFound / REQUIRED_FILES.length * 0.5, issues };
+  }
+
+  const zodResult = SkillPackageSchema.safeParse(skillData);
+  
+  if (!zodResult.success) {
+    for (const error of zodResult.error.errors) {
+      issues.push({
+        type: 'schema_validation',
+        severity: 'error',
+        message: `${error.path.join('.')}: ${error.message}`,
+      });
+    }
   }
 
   const errors = issues.filter(i => i.severity === 'error');
-  return { valid: errors.length === 0, score, issues };
+  
+  return {
+    valid: errors.length === 0 && zodResult.success,
+    score: zodResult.success ? 1 : (requiredFound / REQUIRED_FILES.length) * 0.5,
+    issues,
+    data: zodResult.success ? zodResult.data : undefined,
+  };
 }

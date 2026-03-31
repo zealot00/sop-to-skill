@@ -81,17 +81,19 @@ export interface StepOutput {
 
 /**
  * Step - a single step in the skill workflow
+ * Compatible with SEH engine: id, type, tool_ref, condition
  */
 export interface Step {
   id: string;
   name: string;
   description: string;
-  action: string;
+  type: 'tool' | 'approval' | 'condition';
+  tool_ref?: string;
   condition?: string;
+  approver_group?: string;
+  message?: string;
   input?: StepInput[] | Record<string, unknown>;
   output?: StepOutput[] | Record<string, unknown>;
-  next_step_on_success?: string;
-  next_step_on_failure?: string;
   on_failure?: string;
 }
 
@@ -116,14 +118,29 @@ export interface ErrorAction {
 
 /**
  * SkillSchema - the main schema defining the skill structure
+ * Aligned with SKILL.schema.json: nested structure with meta, triggers, steps, constraints
  */
 export interface SkillSchema {
+  // Top-level structure (aligned with SKILL.schema.json)
   meta: SkillMeta;
   triggers: Trigger[];
   steps: Step[];
   constraints: Constraint[];
+  
+  // Optional extended fields
   decisions?: Decision[];
   error_handling?: ErrorHandling;
+}
+
+export interface Input {
+  name: string;
+  type: string;
+  required: boolean;
+  description: string;
+}
+
+export interface OnFailure {
+  action: string;
 }
 
 export interface SkillMeta {
@@ -159,7 +176,7 @@ export interface Manifest {
   format_version: string;
   generated_at: string;
   generator: string;
-  source_sop?: string;
+  source_sop: string;
   validation_status?: 'pending' | 'validated' | 'failed';
   test_cases_count?: number;
 }

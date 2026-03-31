@@ -40,6 +40,16 @@ describe('extractConstraints', () => {
     const constraints = extractConstraints(text);
     expect(constraints).toHaveLength(0);
   });
+
+  it('extracts constraints in English text', () => {
+    const text = 'The data must be verified. You should review all entries. You may skip optional fields.';
+    const constraints = extractConstraints(text, { language: 'en' });
+    
+    expect(constraints).toHaveLength(3);
+    expect(constraints.filter(c => c.level === 'MUST')).toHaveLength(1);
+    expect(constraints.filter(c => c.level === 'SHOULD')).toHaveLength(1);
+    expect(constraints.filter(c => c.level === 'MAY')).toHaveLength(1);
+  });
 });
 
 describe('extractDecisions', () => {

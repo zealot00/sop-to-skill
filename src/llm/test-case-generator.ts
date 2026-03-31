@@ -1,6 +1,6 @@
 import type { LLMConfig } from './types.js';
 import type { TestCase, Constraint } from '../types/index.js';
-import { GENERATE_TEST_CASES_PROMPT } from './prompts.js';
+import { getPrompt, renderPrompt } from './prompts.js';
 
 export interface TestCaseGeneratorOptions {
   minCases: number;
@@ -26,10 +26,12 @@ export async function generateTestCases(
 
   const constraintsText = constraints.map(c => `[${c.level}] ${c.description}`).join('\n');
 
-  const prompt = GENERATE_TEST_CASES_PROMPT
-    .replace('{skill_name}', skillName)
-    .replace('{constraints}', constraintsText)
-    .replace('{count}', maxCases.toString());
+  const prompts = getPrompt('zh');
+  const prompt = renderPrompt(prompts.GENERATE_TEST_CASES, {
+    skill_name: skillName,
+    constraints: constraintsText,
+    count: maxCases.toString(),
+  });
 
   const response = await fetch(config.apiUrl + '/v1/chat/completions', {
     method: 'POST',

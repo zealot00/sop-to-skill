@@ -1,0 +1,57 @@
+Phase 5-6 Development Complete
+==============================
+
+Date: 2026-03-19
+Status: COMPLETE
+
+## Phase 5: Multi-Agent Framework Generators
+
+### Implemented Files:
+- scripts/generators/openclaw_generator.py - OpenClaw SKILL.md + scripts generator
+- scripts/generators/gpts_generator.py - GPTs Instructions + Actions schema generator
+- scripts/generators/mcp_schema_generator.py - MCP (Model Context Protocol) tools.json generator
+- scripts/generators/claude_tools_generator.py - Claude Tools JSON generator
+- scripts/generators/langchain_generator.py - LangChain Tools generator
+
+### Test Coverage:
+- tests/test_generators/test_openclaw_generator.py (5 tests)
+- tests/test_generators/test_gpts_generator.py (6 tests)
+- tests/test_generators/test_mcp_schema.py (6 tests)
+- tests/test_generators/test_claude_tools_generator.py (6 tests)
+
+## Phase 6: CLI Tool
+
+### Implemented Files:
+- scripts/cli.py - CLI main entry point
+
+### CLI Commands:
+```bash
+# generate - 从 SOP 生成 Skill
+python3 scripts/cli.py generate <input_file> -o <output_dir> -n <skill_name> [-f framework]
+
+# validate - 验证 Skill 结构
+python3 scripts/cli.py validate <skill_dir>
+
+# extract - 仅提取规则为 JSON
+python3 scripts/cli.py extract <input_file> -o <output.json>
+```
+
+### Test Coverage:
+- tests/test_cli/test_cli.py (14 tests)
+
+## Test Results
+All 36 tests passing (100%)
+
+## Framework Support
+- openclaw: SKILL.md format
+- gpts: GPTs Instructions + Actions schema
+- mcp: MCP tools.json
+- claude: Claude Tools JSON
+- langchain: LangChain Tools + Pydantic models
+- all: Generate all formats
+
+## Key Features
+- All functions have type annotations
+- All public functions have docstrings
+- CLI uses argparse
+- TDD workflow followed (RED → GREEN → REFACTOR)
