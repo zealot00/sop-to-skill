@@ -29,10 +29,11 @@ describe('extractConstraints', () => {
     expect(constraints[0].action).toBe('需要标记并重新核查');
   });
 
-  it('extracts roles from constraint sentences', () => {
+  it('extracts constraints without roles when no patterns configured', () => {
     const text = '数据录入员必须核实数据完整性。';
     const constraints = extractConstraints(text);
-    expect(constraints[0].roles).toContain('数据录入员');
+    expect(constraints).toHaveLength(1);
+    expect(constraints[0].roles).toEqual([]);
   });
 
   it('skips short sentences', () => {
@@ -68,29 +69,42 @@ describe('extractDecisions', () => {
 });
 
 describe('extractRoles', () => {
-  it('extracts DMC role', () => {
+  const testRoles = [
+    { id: 'dmc', name: '数据监查员', patterns: [/数据监查员|DMC/] },
+    { id: 'qa', name: '质量保证', patterns: [/质量保证|QA/] },
+    { id: 'manager', name: '经理', patterns: [/经理/] },
+  ];
+
+  it('extracts role with custom patterns', () => {
     const text = '数据监查员(DMC)负责数据核查。';
-    const roles = extractRoles(text);
-    expect(roles['DMC']).toBeDefined();
-    expect(roles['DMC'].description).toBe('数据监查员');
+    const roles = extractRoles(text, { roles: testRoles });
+    expect(roles['dmc']).toBeDefined();
+    expect(roles['dmc'].description).toBe('数据监查员');
   });
 
   it('extracts QA role', () => {
     const text = '质量保证(QA)人员需要进行最终审核。';
-    const roles = extractRoles(text);
-    expect(roles['QA']).toBeDefined();
+    const roles = extractRoles(text, { roles: testRoles });
+    expect(roles['qa']).toBeDefined();
   });
 
   it('extracts multiple roles', () => {
-    const text = '数据经理和QA共同审核报告。';
-    const roles = extractRoles(text);
+    const text = '经理和QA共同审核报告。';
+    const roles = extractRoles(text, { roles: testRoles });
     expect(Object.keys(roles).length).toBeGreaterThanOrEqual(1);
   });
 
   it('counts mentions correctly', () => {
-    const text = '数据经理数据经理负责数据管理。';
-    const roles = extractRoles(text);
-    expect(roles['数据经理']).toBeDefined();
+    const text = '经理经理负责数据管理。';
+    const roles = extractRoles(text, { roles: testRoles });
+    expect(roles['manager']).toBeDefined();
+    expect(roles['manager'].mentions).toBe(2);
+  });
+
+  it('returns empty when no roles match', () => {
+    const text = '这是一个没有角色的文档。';
+    const roles = extractRoles(text, { roles: testRoles });
+    expect(Object.keys(roles).length).toBe(0);
   });
 });
 

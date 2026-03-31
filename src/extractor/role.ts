@@ -18,7 +18,8 @@ export function extractRoles(text: string, options?: RoleExtractorOptions): Reco
   for (const roleDef of roleDefs) {
     let count = 0;
     for (const pattern of roleDef.patterns) {
-      const matches = text.match(pattern);
+      const globalPattern = pattern.global ? pattern : new RegExp(pattern.source, pattern.flags + 'g');
+      const matches = text.match(globalPattern);
       if (matches) {
         count += matches.length;
       }
