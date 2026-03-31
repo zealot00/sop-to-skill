@@ -4,7 +4,7 @@ import type { ParsedContent } from './types.js';
 import { parseMarkdown } from './markdown.js';
 import { extractTables, tablesToMarkdown } from './table-parser.js';
 
-async function parsePdf(filePath: string, content: Buffer): Promise<ParsedContent> {
+async function parsePdf(content: Buffer): Promise<ParsedContent> {
   const pdfParse = (await import('pdf-parse')).default;
   const data = await pdfParse(content);
   
@@ -25,7 +25,7 @@ async function parsePdf(filePath: string, content: Buffer): Promise<ParsedConten
   };
 }
 
-async function parseDocx(filePath: string, content: Buffer): Promise<ParsedContent> {
+async function parseDocx(content: Buffer): Promise<ParsedContent> {
   const mammoth = await import('mammoth');
   const result = await mammoth.extractRawText({ buffer: content });
 
@@ -49,10 +49,10 @@ export async function parseInputFile(filePath: string): Promise<ParsedContent> {
       return parseMarkdown(rawContent);
 
     case '.pdf':
-      return parsePdf(filePath, content);
+      return parsePdf(content);
 
     case '.docx':
-      return parseDocx(filePath, content);
+      return parseDocx(content);
 
     default:
       return {

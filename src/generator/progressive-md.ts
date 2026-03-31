@@ -43,8 +43,8 @@ export function generateMinimalMarkdown(
   if (config.enabled && config.generateConstraintFiles) {
     lines.push('---');
     lines.push('');
-    lines.push('> 📎 Constraint details: `./constraints/`');
-    lines.push('> 📖 Full documentation: `./SKILL.full.md`');
+    lines.push(`> 📎 Constraint details: \`./${config.constraintDir}/\``);
+    lines.push(`> 📖 Full documentation: \`./${config.fullDocFileName}\``);
   }
 
   return lines.join('\n');
@@ -136,8 +136,9 @@ export function generateFullMarkdown(
       lines.push('');
       lines.push('**Rules**:');
       for (const rule of decision.rules) {
-        const condition = typeof rule.when === 'object' ? rule.when.condition : rule.when;
-        const action = typeof rule.then === 'object' ? rule.then.action : rule.then;
+        const condition = rule.condition || (rule.when ? Object.entries(rule.when).map(([k, v]) => `${k}=${v}`).join(', ') : 'true');
+        const actionMap = rule.output || rule.then || {};
+        const action = Object.entries(actionMap).map(([k, v]) => `${k}=${String(v)}`).join(', ') || 'result=undefined';
         lines.push(`- If ${condition} → ${action}`);
       }
       lines.push('');

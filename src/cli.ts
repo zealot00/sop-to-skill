@@ -4,11 +4,12 @@ import ExtractCommand from './commands/extract.js';
 import LLMEnhanceCommand from './commands/llm-enhance.js';
 import ValidateCommand from './commands/validate.js';
 import VersionCommand from './commands/version.js';
+import { getPackageVersionSync } from './version.js';
 
 const cli = new Cli({
   binaryLabel: 'sop-to-skill',
   binaryName: 'sop-to-skill',
-  binaryVersion: '1.0.0',
+  binaryVersion: getPackageVersionSync(),
 });
 
 cli.register(GenerateCommand);

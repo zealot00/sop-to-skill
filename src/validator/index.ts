@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { SkillPackageSchema, type ValidatedSkillPackage } from './skill-schema.js';
+import { loadGeneratorConfig } from '../config/generator-config.js';
 
 export interface ValidationIssue {
   type: string;
@@ -15,10 +16,22 @@ export interface ValidationResult {
   data?: ValidatedSkillPackage;
 }
 
-const REQUIRED_FILES = ['SKILL.md', 'skill.schema.json', 'skill.manifest.yaml'];
+const DEFAULT_REQUIRED_FILES = ['SKILL.md', 'skill.schema.json', 'skill.manifest.yaml'];
 
-export async function validateSkillPackage(packagePath: string): Promise<ValidationResult> {
+export interface ValidateOptions {
+  configPath?: string;
+  strictConfig?: boolean;
+}
+
+export async function validateSkillPackage(packagePath: string, options?: ValidateOptions): Promise<ValidationResult> {
   const issues: ValidationIssue[] = [];
+  const config = await loadGeneratorConfig(options?.configPath, { strict: options?.strictConfig ?? true });
+  const requiredFiles = [
+    config.output.skillFileName,
+    config.output.schemaFileName,
+    config.output.manifestFileName,
+  ].filter((v, i, arr) => arr.indexOf(v) === i);
+  const effectiveRequiredFiles = requiredFiles.length > 0 ? requiredFiles : DEFAULT_REQUIRED_FILES;
 
   try {
     await fs.access(packagePath);
@@ -35,7 +48,7 @@ export async function validateSkillPackage(packagePath: string): Promise<Validat
   }
 
   let requiredFound = 0;
-  for (const file of REQUIRED_FILES) {
+  for (const file of effectiveRequiredFiles) {
     try {
       await fs.access(path.join(packagePath, file));
       requiredFound++;
@@ -44,7 +57,7 @@ export async function validateSkillPackage(packagePath: string): Promise<Validat
     }
   }
 
-  const schemaPath = path.join(packagePath, 'skill.schema.json');
+  const schemaPath = path.join(packagePath, config.output.schemaFileName);
   let skillData: any;
 
   try {
@@ -52,7 +65,7 @@ export async function validateSkillPackage(packagePath: string): Promise<Validat
     skillData = JSON.parse(content);
   } catch (e: any) {
     issues.push({ type: 'invalid_json', severity: 'error', message: `skill.schema.json is not valid JSON: ${e.message}` });
-    return { valid: false, score: requiredFound / REQUIRED_FILES.length * 0.5, issues };
+    return { valid: false, score: requiredFound / effectiveRequiredFiles.length * 0.5, issues };
   }
 
   const zodResult = SkillPackageSchema.safeParse(skillData);
@@ -71,7 +84,7 @@ export async function validateSkillPackage(packagePath: string): Promise<Validat
   
   return {
     valid: errors.length === 0 && zodResult.success,
-    score: zodResult.success ? 1 : (requiredFound / REQUIRED_FILES.length) * 0.5,
+    score: zodResult.success ? 1 : (requiredFound / effectiveRequiredFiles.length) * 0.5,
     issues,
     data: zodResult.success ? zodResult.data : undefined,
   };

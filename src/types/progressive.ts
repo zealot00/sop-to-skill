@@ -11,6 +11,7 @@ export interface ProgressiveConfig {
   generateFullDoc: boolean;
   generateConstraintFiles: boolean;
   constraintDir: string;
+  fullDocFileName: string;
 }
 
 export const DEFAULT_PROGRESSIVE_CONFIG: ProgressiveConfig = {
@@ -19,6 +20,7 @@ export const DEFAULT_PROGRESSIVE_CONFIG: ProgressiveConfig = {
   generateFullDoc: true,
   generateConstraintFiles: true,
   constraintDir: 'constraints',
+  fullDocFileName: 'SKILL.full.md',
 };
 
 export interface StepCore {

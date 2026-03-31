@@ -1,0 +1,35 @@
+{
+  "metadata": {
+    "generatorName": "sop-to-skill",
+    "skillVersion": "1.0.0",
+    "formatVersion": "1.0.0",
+    "defaultSkillName": "Untitled Skill",
+    "defaultConstraintConfidence": 0.85
+  },
+  "schema": {
+    "maxGeneratedSteps": 8,
+    "defaultTriggers": [
+      {
+        "type": "execution",
+        "name": "execute",
+        "description": "Execute the skill"
+      }
+    ]
+  },
+  "progressive": {
+    "enabledByDefault": true,
+    "detailLevel": "minimal",
+    "generateFullDoc": true,
+    "generateConstraintFiles": true
+  },
+  "framework": {
+    "enabledFrameworks": ["openclaw", "opencode", "codex", "gpts", "mcp", "claude", "langchain"]
+  },
+  "output": {
+    "skillFileName": "SKILL.md",
+    "fullSkillFileName": "SKILL.full.md",
+    "schemaFileName": "skill.schema.json",
+    "manifestFileName": "skill.manifest.yaml",
+    "constraintDir": "constraints"
+  }
+}

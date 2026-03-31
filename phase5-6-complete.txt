@@ -1,6 +1,8 @@
 Phase 5-6 Development Complete
 ==============================
 
+NOTICE (2026-03-31): This file describes a legacy Python prototype track (`scripts/`, `tests/`) that is no longer present in the current TypeScript codebase.
+
 Date: 2026-03-19
 Status: COMPLETE
 

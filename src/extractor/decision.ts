@@ -1,17 +1,5 @@
 import type { Decision, DecisionRule } from '../types/index.js';
 
-const DECISION_PATTERNS = [
-  /(如果|当|一旦)(.+?)(则|那么|应|必须)(.+?)$/,
-  /(.+?)情况[之下的]?(.+?)[选择决定采取](.+?)$/,
-  /根据(.+?)，[选择决定采取](.+?)$/,
-];
-
-const OPTION_PATTERNS = [
-  /[或或者且和]([^，,]+?)/g,
-  /方案[一二三四五六七八九十]+/g,
-  /A[、.]?B[、.]?C?/gi,
-];
-
 export function extractDecisions(text: string): Decision[] {
   const decisions: Decision[] = [];
   const sentences = text.split(/[。\n]/);

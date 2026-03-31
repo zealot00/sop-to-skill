@@ -123,11 +123,27 @@ sop-to-skill extract ./SOP.md
 ```bash
 sop-to-skill generate <input> --name "xxx" --output <dir>   # 生成 Skill 包（默认渐进式）
 sop-to-skill generate <input> --name "xxx" --output <dir> --progressive legacy   # 传统格式
+sop-to-skill generate <input> --name "xxx" --output <dir> --framework codex       # 生成指定 Agent 框架产物
+sop-to-skill generate <input> --name "xxx" --output <dir> --framework all          # 生成全部框架产物
+sop-to-skill generate <input> --name "xxx" --output <dir> --config ./generator.json # 配置化输出文件名/元数据
+sop-to-skill generate <input> --name "xxx" --output <dir> --config ./generator.json --lenient-config # 配置异常时降级默认
 sop-to-skill extract <input>                                  # 提取数据
 sop-to-skill llm-enhance <input> --llm-api http://xxx         # LLM 增强（预留）
-sop-to-skill validate <dir>                                   # 验证包结构
+sop-to-skill validate <dir> --config ./generator.json         # 按相同配置验证包结构
+sop-to-skill validate <dir> --config ./generator.json --lenient-config # 配置异常时降级默认校验
 sop-to-skill version                                          # 版本信息
 ```
+
+### 配置化控制（推荐）
+
+`--config` 支持三类关键控制：
+
+- `progressive`：控制是否默认启用渐进式、是否输出 `SKILL.full.md`、是否输出 `constraints/` 细节目录
+- `framework`：控制 `--framework all` 时允许输出的框架白名单
+- `output`：控制核心产物文件名（`skillFileName` / `schemaFileName` / `manifestFileName` 等）
+
+默认是**严格配置校验**：配置文件存在但格式非法时直接报错（防止静默生成错误产物）。  
+只有显式传 `--lenient-config` 才会自动回退到默认配置。
 
 ---
 

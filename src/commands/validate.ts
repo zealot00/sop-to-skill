@@ -2,6 +2,8 @@ import { Command, Option } from 'clipanion';
 
 export default class ValidateCommand extends Command {
   public inputDir = Option.String();
+  public configPath = Option.String('--config', { description: 'Path to generator config JSON' });
+  public lenientConfig = Option.Boolean('--lenient-config', false, { description: 'Fallback to defaults when config is invalid' });
   public verbose = Option.Boolean('-v,--verbose', false);
 
   static paths = [['validate']];
@@ -19,7 +21,7 @@ export default class ValidateCommand extends Command {
     try {
       const { validateSkillPackage } = await import('../validator/index.js');
 
-      const result = await validateSkillPackage(this.inputDir);
+      const result = await validateSkillPackage(this.inputDir, { configPath: this.configPath, strictConfig: !this.lenientConfig });
 
       if (result.valid) {
         this.context.stdout.write('Validation passed!\n');

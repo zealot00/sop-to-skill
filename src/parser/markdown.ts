@@ -25,12 +25,6 @@ function extractTitle(lines: string[]): string | undefined {
   return undefined;
 }
 
-interface SectionMatch {
-  title: string;
-  level: number;
-  content: string;
-}
-
 function extractSections(content: string): ParsedContent['sections'] {
   const sections: ParsedContent['sections'] = [];
   const lines = content.split('\n');

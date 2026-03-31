@@ -37,8 +37,10 @@ export interface Decision {
  * Decision Rule - a single rule within a decision
  */
 export interface DecisionRule {
-  when: Record<string, string>;
-  then: Record<string, string>;
+  condition?: string;
+  output?: Record<string, string>;
+  when?: Record<string, string>;
+  then?: Record<string, string>;
   priority?: number;
 }
 
@@ -48,8 +50,18 @@ export interface Parameter {
   description: string;
   minValue?: number;
   maxValue?: number;
-  defaultValue?: any;
+  defaultValue?: unknown;
   unit?: string;
+}
+
+export interface BoundaryParameter {
+  name: string;
+  minValue?: number;
+  maxValue?: number;
+  defaultValue?: number;
+  unit?: string;
+  source?: string;
+  confidence: number;
 }
 
 export interface Source {
@@ -87,7 +99,7 @@ export interface Step {
   id: string;
   name: string;
   description: string;
-  type: 'tool' | 'approval' | 'condition';
+  type?: 'tool' | 'approval' | 'condition';
   action?: string;
   tool_ref?: string;
   condition?: string;
@@ -104,19 +116,14 @@ export interface Step {
  * Error Handling - defines how errors should be handled
  */
 export interface ErrorHandling {
-  rules: ErrorRule[];
+  strategies?: ErrorStrategy[];
   fallback_steps?: string[];
 }
 
-export interface ErrorRule {
-  condition: string;
-  actions: ErrorAction[];
-}
-
-export interface ErrorAction {
-  type: string;
-  description?: string;
-  roles?: string[];
+export interface ErrorStrategy {
+  error_type: string;
+  action: string;
+  recovery_step?: string;
 }
 
 /**

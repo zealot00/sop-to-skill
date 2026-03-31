@@ -37,6 +37,31 @@ export const ConstraintSchema = z.object({
   confidence: z.number().min(0).max(1),
 });
 
+export const DecisionRuleSchema = z.object({
+  condition: z.string(),
+  output: z.record(z.string(), z.any()),
+  priority: z.number().optional(),
+});
+
+export const DecisionSchema = z.object({
+  id: z.string().regex(/^DEC-[A-Z0-9]+$/),
+  name: z.string().min(1),
+  inputVars: z.array(z.string()),
+  outputVars: z.array(z.string()),
+  rules: z.array(DecisionRuleSchema).min(1),
+});
+
+export const ErrorStrategySchema = z.object({
+  error_type: z.string().min(1),
+  action: z.string().min(1),
+  recovery_step: z.string().optional(),
+});
+
+export const ErrorHandlingSchema = z.object({
+  strategies: z.array(ErrorStrategySchema).optional(),
+  fallback_steps: z.array(z.string()).optional(),
+});
+
 export const TriggerSchema = z.object({
   type: z.enum(['execution', 'query', 'approval', 'event']),
   description: z.string().optional(),
@@ -68,8 +93,8 @@ export const SkillSchemaSchema = z.object({
   triggers: z.array(TriggerSchema).min(1),
   steps: z.array(StepSchema).min(1),
   constraints: z.array(ConstraintSchema),
-  decisions: z.array(z.any()).optional(),
-  error_handling: z.any().optional(),
+  decisions: z.array(DecisionSchema).optional(),
+  error_handling: ErrorHandlingSchema.optional(),
 });
 
 export const SkillPackageSchema = z.object({
