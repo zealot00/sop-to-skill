@@ -286,7 +286,7 @@ sop-to-skill/
 
 ## 文档
 
-- [优化计划](./docs/plans/2026-03-31-sop-to-skill-optimization.md) — 详细改进路线图
+- [优化计划](docs/plans/2026-03-31-sop-to-skill-optimization.md) — 详细改进路线图
 
 ---
 
