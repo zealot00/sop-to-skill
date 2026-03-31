@@ -12,6 +12,7 @@
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:e2e": "bash ci/e2e-smoke.sh",
+    "test:api-smoke": "bash ci/api-smoke.sh",
     "test:watch": "vitest",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit"

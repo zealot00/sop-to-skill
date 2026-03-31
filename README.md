@@ -172,6 +172,7 @@ sop-to-skill version                                          # 版本信息
 
 - CI 会执行：`typecheck` + `unit tests` + `build` + `generate+validate` 端到端 smoke
 - 契约测试会检查 `SKILL.schema.json` 与运行时校验器（Zod）在关键字段上的一致性（DecisionRule / ErrorHandling / Step）
+- 本地 API 烟测：`npm run test:api-smoke`（默认请求 `http://localhost:8080`，可用 `ORCH_BASE_URL` 覆盖）
 
 ---
 
