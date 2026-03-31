@@ -2,6 +2,9 @@
 
 This project is a **Skill Builder CLI**. Agents should call it as a tool to convert SOP files into skill packages.
 
+Remote API platform for orchestration and enhancement:
+`https://github.com/zealot00/managing-up`
+
 ## Core Contract
 
 1. Run `generate` to produce package artifacts.
@@ -44,6 +47,18 @@ sop-to-skill generate <sop-file> -o <out> \
 ```
 
 These overrides apply to `generate`, `extract`, and `llm-enhance`.
+
+## Orchestrator Enhancement Strategy
+
+Commands also support orchestrator enhancement:
+
+- `--orchestrator-api`
+- `--orchestrator-token`
+- `--api-strategy local_only|remote_first|remote_only`
+- `--api-timeout-ms`
+
+Recommended for production: `remote_first`.
+This preserves local fallback and avoids hard downtime when remote API is unavailable.
 
 ## Failure Handling
 

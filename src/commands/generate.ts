@@ -4,6 +4,7 @@ import path from 'path';
 import yaml from 'js-yaml';
 import type { ExtractedData } from '../types/index.js';
 import type { ProgressiveConfig } from '../types/progressive.js';
+import { resolveExtraction } from './extraction-resolver.js';
 
 export default class GenerateCommand extends Command {
   public verbose = Option.Boolean('-v,--verbose', false);
@@ -18,6 +19,10 @@ export default class GenerateCommand extends Command {
   public extractThreshold = Option.String('--extract-threshold', { description: 'Override extraction confidence threshold (0-1)' });
   public roleConfigPath = Option.String('--role-config', { description: 'Path to role config JSON' });
   public noBoundary = Option.Boolean('--no-boundary', false, { description: 'Disable boundary detection' });
+  public orchestratorApi = Option.String('--orchestrator-api', { description: 'Orchestrator API base URL' });
+  public orchestratorToken = Option.String('--orchestrator-token', { description: 'Orchestrator API bearer token' });
+  public apiStrategy = Option.String('--api-strategy', 'local_only', { description: 'Extraction strategy: local_only|remote_first|remote_only' });
+  public apiTimeoutMs = Option.String('--api-timeout-ms', '8000', { description: 'Orchestrator API timeout in milliseconds' });
 
   static paths = [['generate']];
 
@@ -53,8 +58,13 @@ export default class GenerateCommand extends Command {
       const parsed = await parseInputFile(this.inputFile);
       const generatorConfig = await loadGeneratorConfig(this.configPath, { strict: !this.lenientConfig });
       const thresholdOverride = this.extractThreshold !== undefined ? Number(this.extractThreshold) : undefined;
+      const timeoutMs = Number(this.apiTimeoutMs);
       if (thresholdOverride !== undefined && (Number.isNaN(thresholdOverride) || thresholdOverride < 0 || thresholdOverride > 1)) {
         this.context.stdout.write('Error: --extract-threshold must be a number between 0 and 1\n');
+        return 1;
+      }
+      if (Number.isNaN(timeoutMs) || timeoutMs <= 0) {
+        this.context.stdout.write('Error: --api-timeout-ms must be a positive integer\n');
         return 1;
       }
       const language = this.extractLanguage || generatorConfig.extraction.language;
@@ -62,12 +72,30 @@ export default class GenerateCommand extends Command {
         this.context.stdout.write('Error: --extract-language must be one of auto|zh|en\n');
         return 1;
       }
-      const extracted = extractFromText(parsed.content, {
-        language: language === 'auto' ? undefined : (language as 'zh' | 'en'),
-        confidenceThreshold: thresholdOverride ?? generatorConfig.extraction.confidenceThreshold,
-        roleConfigPath: this.roleConfigPath || generatorConfig.extraction.roleConfigPath,
-        enableBoundaryDetection: this.noBoundary ? false : generatorConfig.extraction.enableBoundaryDetection,
-      });
+      if (!['local_only', 'remote_first', 'remote_only'].includes(this.apiStrategy)) {
+        this.context.stdout.write('Error: --api-strategy must be one of local_only|remote_first|remote_only\n');
+        return 1;
+      }
+      const extracted = await resolveExtraction(
+        parsed.content,
+        () => extractFromText(parsed.content, {
+          language: language === 'auto' ? undefined : (language as 'zh' | 'en'),
+          confidenceThreshold: thresholdOverride ?? generatorConfig.extraction.confidenceThreshold,
+          roleConfigPath: this.roleConfigPath || generatorConfig.extraction.roleConfigPath,
+          enableBoundaryDetection: this.noBoundary ? false : generatorConfig.extraction.enableBoundaryDetection,
+        }),
+        {
+          strategy: this.apiStrategy as 'local_only' | 'remote_first' | 'remote_only',
+          orchestratorApi: this.orchestratorApi || process.env.SOP_TO_SKILL_ORCHESTRATOR_API,
+          orchestratorToken: this.orchestratorToken || process.env.SOP_TO_SKILL_ORCHESTRATOR_TOKEN,
+          apiTimeoutMs: timeoutMs,
+          language: language as 'auto' | 'zh' | 'en',
+          confidenceThreshold: thresholdOverride ?? generatorConfig.extraction.confidenceThreshold,
+          roleConfigPath: this.roleConfigPath || generatorConfig.extraction.roleConfigPath,
+          enableBoundaryDetection: this.noBoundary ? false : generatorConfig.extraction.enableBoundaryDetection,
+          onInfo: (msg) => this.verbose && this.context.stdout.write(`${msg}\n`),
+        }
+      );
       const progressiveEnabled = this.progressive ? this.progressive !== 'legacy' : generatorConfig.progressive.enabledByDefault;
       if (this.verbose) {
         this.context.stdout.write(`Progressive disclosure: ${progressiveEnabled ? 'enabled' : 'disabled'}\n`);

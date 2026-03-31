@@ -1,0 +1,859 @@
+openapi: 3.1.0
+info:
+  title: SOP-to-Skill Orchestrator API
+  version: 1.0.0
+  summary: Control plane for enhanced extraction, skill versioning, test orchestration, and gate evaluation
+  description: |
+    This API orchestrates remote enhancement while keeping CLI local-first.
+    If remote APIs are unavailable, CLI must fallback to local extraction/generation.
+    Recommended implementation repository: https://github.com/zealot00/managing-up
+
+servers:
+  - url: https://managing-up.example.com
+    description: managing-up production
+  - url: https://staging-managing-up.example.com
+    description: managing-up staging
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Health
+  - name: Runs
+  - name: Extraction
+  - name: Skills
+  - name: Tests
+  - name: Gates
+  - name: Policies
+
+paths:
+  /v1/healthz:
+    get:
+      tags: [Health]
+      operationId: healthz
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              examples:
+                ok:
+                  value:
+                    status: ok
+                    service: sop-skill-orchestrator
+                    version: 1.0.0
+                    time: "2026-03-31T10:00:00Z"
+
+  /v1/runs:
+    post:
+      tags: [Runs]
+      operationId: createRun
+      summary: Create an async orchestration run
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRunRequest"
+      responses:
+        "202":
+          description: Accepted
+          headers:
+            Location:
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunAcceptedResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /v1/runs/{runId}:
+    get:
+      tags: [Runs]
+      operationId: getRun
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+      responses:
+        "200":
+          description: Run detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /v1/runs/{runId}/artifacts:
+    get:
+      tags: [Runs]
+      operationId: listRunArtifacts
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+      responses:
+        "200":
+          description: Artifact list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArtifactListResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /v1/extraction/enhance:
+    post:
+      tags: [Extraction]
+      operationId: enhanceExtraction
+      summary: Enhanced extraction from raw SOP text
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnhanceExtractionRequest"
+      responses:
+        "200":
+          description: Enhanced extraction output
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnhancedExtractionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /v1/extraction/compare:
+    post:
+      tags: [Extraction]
+      operationId: compareExtraction
+      summary: Compare local extraction and enhanced extraction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompareExtractionRequest"
+      responses:
+        "200":
+          description: Comparison result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExtractionComparisonResponse"
+
+  /v1/skills:
+    post:
+      tags: [Skills]
+      operationId: createSkill
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSkillRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Skill"
+
+  /v1/skills/{skillId}/versions:
+    post:
+      tags: [Skills]
+      operationId: createSkillVersion
+      parameters:
+        - $ref: "#/components/parameters/SkillId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSkillVersionRequest"
+      responses:
+        "201":
+          description: Created version
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkillVersion"
+    get:
+      tags: [Skills]
+      operationId: listSkillVersions
+      parameters:
+        - $ref: "#/components/parameters/SkillId"
+      responses:
+        "200":
+          description: Version list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkillVersionList"
+
+  /v1/skills/{skillId}/versions/{version}:
+    get:
+      tags: [Skills]
+      operationId: getSkillVersion
+      parameters:
+        - $ref: "#/components/parameters/SkillId"
+        - $ref: "#/components/parameters/Version"
+      responses:
+        "200":
+          description: Version detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkillVersion"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /v1/skills/{skillId}/diff:
+    get:
+      tags: [Skills]
+      operationId: diffSkillVersions
+      parameters:
+        - $ref: "#/components/parameters/SkillId"
+        - name: from
+          in: query
+          required: true
+          schema: { type: string }
+        - name: to
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Diff result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersionDiffResponse"
+
+  /v1/skills/{skillId}/rollback:
+    post:
+      tags: [Skills]
+      operationId: rollbackSkill
+      parameters:
+        - $ref: "#/components/parameters/SkillId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RollbackRequest"
+      responses:
+        "202":
+          description: Rollback accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionAccepted"
+
+  /v1/skills/{skillId}/promote:
+    post:
+      tags: [Skills]
+      operationId: promoteSkill
+      parameters:
+        - $ref: "#/components/parameters/SkillId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromoteRequest"
+      responses:
+        "202":
+          description: Promote accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionAccepted"
+
+  /v1/tests/runs:
+    post:
+      tags: [Tests]
+      operationId: createTestRun
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTestRunRequest"
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TestRunAccepted"
+
+  /v1/tests/runs/{testRunId}:
+    get:
+      tags: [Tests]
+      operationId: getTestRun
+      parameters:
+        - $ref: "#/components/parameters/TestRunId"
+      responses:
+        "200":
+          description: Test run detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TestRun"
+
+  /v1/tests/runs/{testRunId}/report:
+    get:
+      tags: [Tests]
+      operationId: getTestReport
+      parameters:
+        - $ref: "#/components/parameters/TestRunId"
+      responses:
+        "200":
+          description: Test report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TestReport"
+
+  /v1/gates/evaluate:
+    post:
+      tags: [Gates]
+      operationId: evaluateGate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GateEvaluateRequest"
+      responses:
+        "200":
+          description: Gate decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GateEvaluateResponse"
+
+  /v1/policies/{policyId}:
+    get:
+      tags: [Policies]
+      operationId: getPolicy
+      parameters:
+        - $ref: "#/components/parameters/PolicyId"
+      responses:
+        "200":
+          description: Policy detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Policy"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema: { type: string, minLength: 8, maxLength: 128 }
+    RunId:
+      name: runId
+      in: path
+      required: true
+      schema: { type: string }
+    SkillId:
+      name: skillId
+      in: path
+      required: true
+      schema: { type: string }
+    Version:
+      name: version
+      in: path
+      required: true
+      schema: { type: string }
+    TestRunId:
+      name: testRunId
+      in: path
+      required: true
+      schema: { type: string }
+    PolicyId:
+      name: policyId
+      in: path
+      required: true
+      schema: { type: string }
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, service, version, time]
+      properties:
+        status: { type: string, enum: [ok] }
+        service: { type: string }
+        version: { type: string }
+        time: { type: string, format: date-time }
+
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        details: { type: object, additionalProperties: true }
+        requestId: { type: string }
+
+    SOPSource:
+      type: object
+      oneOf:
+        - type: object
+          required: [type, content]
+          properties:
+            type: { type: string, const: inline_text }
+            content: { type: string, minLength: 1 }
+        - type: object
+          required: [type, uri]
+          properties:
+            type: { type: string, const: file_uri }
+            uri: { type: string }
+
+    ExtractionOptions:
+      type: object
+      properties:
+        language: { type: string, enum: [auto, zh, en], default: auto }
+        confidenceThreshold: { type: number, minimum: 0, maximum: 1, default: 0.7 }
+        roleConfigPath: { type: string }
+        enableBoundaryDetection: { type: boolean, default: true }
+
+    RunOptions:
+      type: object
+      properties:
+        framework:
+          type: string
+          enum: [openclaw, opencode, codex, gpts, mcp, claude, langchain, all]
+          default: all
+        configRef: { type: string }
+        extraction: { $ref: "#/components/schemas/ExtractionOptions" }
+        progressive:
+          type: object
+          properties:
+            enabled: { type: boolean }
+
+    CreateRunRequest:
+      type: object
+      required: [skillName, source]
+      properties:
+        skillName: { type: string }
+        source: { $ref: "#/components/schemas/SOPSource" }
+        options: { $ref: "#/components/schemas/RunOptions" }
+
+    RunAcceptedResponse:
+      type: object
+      required: [runId, status, createdAt, links]
+      properties:
+        runId: { type: string }
+        status: { type: string, enum: [queued] }
+        createdAt: { type: string, format: date-time }
+        links:
+          type: object
+          required: [self]
+          properties:
+            self: { type: string }
+
+    ArtifactRef:
+      type: object
+      required: [kind, uri]
+      properties:
+        kind:
+          type: string
+          enum: [skill_md, full_skill_md, schema_json, manifest_yaml, constraints_dir, framework_bundle]
+        uri: { type: string }
+
+    RunResult:
+      type: object
+      properties:
+        skillId: { type: string }
+        version: { type: string }
+        artifacts:
+          type: array
+          items: { $ref: "#/components/schemas/ArtifactRef" }
+
+    RunDetail:
+      type: object
+      required: [runId, status, stage, skillName, createdAt, updatedAt, errors]
+      properties:
+        runId: { type: string }
+        status: { type: string, enum: [queued, running, succeeded, failed, canceled] }
+        stage: { type: string, enum: [extraction, generation, validation, versioning, testing, completed] }
+        skillName: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        result: { $ref: "#/components/schemas/RunResult" }
+        errors:
+          type: array
+          items: { $ref: "#/components/schemas/ErrorResponse" }
+
+    ArtifactListResponse:
+      type: object
+      required: [runId, artifacts]
+      properties:
+        runId: { type: string }
+        artifacts:
+          type: array
+          items: { $ref: "#/components/schemas/ArtifactRef" }
+
+    Constraint:
+      type: object
+      required: [id, level, description, roles, confidence]
+      properties:
+        id: { type: string }
+        level: { type: string, enum: [MUST, SHOULD, MAY] }
+        description: { type: string }
+        condition: { type: string }
+        action: { type: string }
+        roles:
+          type: array
+          items: { type: string }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+
+    DecisionRule:
+      type: object
+      required: [condition, output]
+      properties:
+        condition: { type: string }
+        output:
+          type: object
+          additionalProperties: true
+        priority: { type: integer }
+
+    Decision:
+      type: object
+      required: [id, name, inputVars, outputVars, rules]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        inputVars:
+          type: array
+          items: { type: string }
+        outputVars:
+          type: array
+          items: { type: string }
+        rules:
+          type: array
+          items: { $ref: "#/components/schemas/DecisionRule" }
+
+    RoleStat:
+      type: object
+      required: [name, mentions]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        mentions: { type: integer }
+        source: { type: string }
+
+    BoundaryParameter:
+      type: object
+      required: [name, confidence]
+      properties:
+        name: { type: string }
+        minValue: { type: number }
+        maxValue: { type: number }
+        defaultValue: { type: number }
+        unit: { type: string }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+
+    EnhanceExtractionRequest:
+      type: object
+      required: [source]
+      properties:
+        source: { $ref: "#/components/schemas/SOPSource" }
+        options: { $ref: "#/components/schemas/ExtractionOptions" }
+
+    EnhancedExtractionResponse:
+      type: object
+      required: [constraints, decisions, roles, boundaries, modelInfo]
+      properties:
+        constraints:
+          type: array
+          items: { $ref: "#/components/schemas/Constraint" }
+        decisions:
+          type: array
+          items: { $ref: "#/components/schemas/Decision" }
+        roles:
+          type: array
+          items: { $ref: "#/components/schemas/RoleStat" }
+        boundaries:
+          type: array
+          items: { $ref: "#/components/schemas/BoundaryParameter" }
+        modelInfo:
+          type: object
+          required: [provider, model, latencyMs]
+          properties:
+            provider: { type: string }
+            model: { type: string }
+            latencyMs: { type: integer }
+
+    CompareExtractionRequest:
+      type: object
+      required: [local, remote]
+      properties:
+        local: { $ref: "#/components/schemas/EnhancedExtractionResponse" }
+        remote: { $ref: "#/components/schemas/EnhancedExtractionResponse" }
+
+    ExtractionComparisonResponse:
+      type: object
+      required: [summary, diffs]
+      properties:
+        summary:
+          type: object
+          required: [constraintDelta, decisionDelta, roleDelta]
+          properties:
+            constraintDelta: { type: integer }
+            decisionDelta: { type: integer }
+            roleDelta: { type: integer }
+        diffs:
+          type: array
+          items:
+            type: object
+            required: [type, detail]
+            properties:
+              type: { type: string, enum: [constraint, decision, role, boundary] }
+              detail: { type: string }
+
+    CreateSkillRequest:
+      type: object
+      required: [skillId, name]
+      properties:
+        skillId: { type: string }
+        name: { type: string }
+        owner: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+
+    Skill:
+      type: object
+      required: [skillId, name, createdAt]
+      properties:
+        skillId: { type: string }
+        name: { type: string }
+        owner: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    CreateSkillVersionRequest:
+      type: object
+      required: [version, sourceHash, schemaHash, artifacts]
+      properties:
+        version: { type: string }
+        sourceHash: { type: string }
+        schemaHash: { type: string }
+        configSnapshot:
+          type: object
+          additionalProperties: true
+        artifacts:
+          type: array
+          items: { $ref: "#/components/schemas/ArtifactRef" }
+        runId: { type: string }
+
+    SkillVersion:
+      type: object
+      required: [skillId, version, sourceHash, schemaHash, artifacts, createdAt]
+      properties:
+        skillId: { type: string }
+        version: { type: string }
+        sourceHash: { type: string }
+        schemaHash: { type: string }
+        configSnapshot:
+          type: object
+          additionalProperties: true
+        artifacts:
+          type: array
+          items: { $ref: "#/components/schemas/ArtifactRef" }
+        runId: { type: string }
+        createdAt: { type: string, format: date-time }
+        promoted: { type: boolean, default: false }
+
+    SkillVersionList:
+      type: object
+      required: [skillId, versions]
+      properties:
+        skillId: { type: string }
+        versions:
+          type: array
+          items: { $ref: "#/components/schemas/SkillVersion" }
+
+    VersionDiffResponse:
+      type: object
+      required: [skillId, from, to, summary]
+      properties:
+        skillId: { type: string }
+        from: { type: string }
+        to: { type: string }
+        summary:
+          type: object
+          required: [constraintsChanged, decisionsChanged, stepsChanged]
+          properties:
+            constraintsChanged: { type: integer }
+            decisionsChanged: { type: integer }
+            stepsChanged: { type: integer }
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              path: { type: string }
+              before: {}
+              after: {}
+
+    RollbackRequest:
+      type: object
+      required: [targetVersion, reason]
+      properties:
+        targetVersion: { type: string }
+        reason: { type: string }
+
+    PromoteRequest:
+      type: object
+      required: [version, channel]
+      properties:
+        version: { type: string }
+        channel: { type: string, enum: [dev, staging, prod] }
+
+    ActionAccepted:
+      type: object
+      required: [actionId, status, acceptedAt]
+      properties:
+        actionId: { type: string }
+        status: { type: string, enum: [accepted] }
+        acceptedAt: { type: string, format: date-time }
+
+    CreateTestRunRequest:
+      type: object
+      required: [skillId, version, runner]
+      properties:
+        skillId: { type: string }
+        version: { type: string }
+        runner:
+          type: object
+          required: [type, command]
+          properties:
+            type: { type: string, enum: [cli] }
+            command: { type: string }
+            args:
+              type: array
+              items: { type: string }
+        datasetRef: { type: string }
+
+    TestRunAccepted:
+      type: object
+      required: [testRunId, status]
+      properties:
+        testRunId: { type: string }
+        status: { type: string, enum: [queued] }
+
+    TestRun:
+      type: object
+      required: [testRunId, status, createdAt]
+      properties:
+        testRunId: { type: string }
+        status: { type: string, enum: [queued, running, succeeded, failed] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        exitCode: { type: integer }
+
+    TestReport:
+      type: object
+      required: [testRunId, metrics, passed]
+      properties:
+        testRunId: { type: string }
+        passed: { type: boolean }
+        metrics:
+          type: object
+          required: [totalCases, passRate]
+          properties:
+            totalCases: { type: integer }
+            passRate: { type: number, minimum: 0, maximum: 1 }
+            regressions: { type: integer }
+        failures:
+          type: array
+          items:
+            type: object
+            properties:
+              caseId: { type: string }
+              reason: { type: string }
+
+    GateEvaluateRequest:
+      type: object
+      required: [skillId, version, policyId]
+      properties:
+        skillId: { type: string }
+        version: { type: string }
+        policyId: { type: string }
+        testRunId: { type: string }
+        extraSignals:
+          type: object
+          additionalProperties: true
+
+    GateEvaluateResponse:
+      type: object
+      required: [passed, policyId, reasons]
+      properties:
+        passed: { type: boolean }
+        policyId: { type: string }
+        reasons:
+          type: array
+          items: { type: string }
+        decisionAt: { type: string, format: date-time }
+
+    Policy:
+      type: object
+      required: [policyId, name, rules]
+      properties:
+        policyId: { type: string }
+        name: { type: string }
+        rules:
+          type: array
+          items:
+            type: object
+            required: [metric, op, value]
+            properties:
+              metric: { type: string }
+              op: { type: string, enum: [gte, lte, eq, neq] }
+              value: {}

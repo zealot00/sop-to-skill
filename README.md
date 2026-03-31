@@ -128,12 +128,14 @@ sop-to-skill generate <input> --name "xxx" --output <dir> --framework all       
 sop-to-skill generate <input> --name "xxx" --output <dir> --config ./generator.json # 配置化输出文件名/元数据
 sop-to-skill generate <input> --name "xxx" --output <dir> --config ./generator.json --lenient-config # 配置异常时降级默认
 sop-to-skill generate <input> --output <dir> --extract-language zh --extract-threshold 0.8 # 覆盖提取策略
+sop-to-skill generate <input> --output <dir> --orchestrator-api http://host:port --api-strategy remote_first # 远端增强 + 本地回退
 sop-to-skill extract <input>                                  # 提取数据
 sop-to-skill extract <input> --config ./generator.json --role-config ./role-config.json # 提取层配置化
 sop-to-skill llm-enhance <input> --llm-api http://xxx         # LLM 增强（预留）
 sop-to-skill llm-enhance <input> --extract-language en --no-boundary # LLM增强前提取控制
 sop-to-skill validate <dir> --config ./generator.json         # 按相同配置验证包结构
 sop-to-skill validate <dir> --config ./generator.json --lenient-config # 配置异常时降级默认校验
+sop-to-skill orchestrator --op health --base-url http://host:port      # 直接调用 orchestrator API
 sop-to-skill version                                          # 版本信息
 ```
 
@@ -149,6 +151,21 @@ sop-to-skill version                                          # 版本信息
 默认是**严格配置校验**：配置文件存在但格式非法时直接报错（防止静默生成错误产物）。  
 只有显式传 `--lenient-config` 才会自动回退到默认配置。
 
+### 远端增强与降级
+
+`generate` / `extract` / `llm-enhance` 新增：
+
+- `--orchestrator-api` / `--orchestrator-token`
+- `--api-strategy local_only|remote_first|remote_only`（默认 `local_only`）
+- `--api-timeout-ms`
+
+策略说明：
+- `local_only`：仅本地能力（当前默认能力）
+- `remote_first`：优先远端增强，失败自动降级本地
+- `remote_only`：只走远端，失败即报错
+
+这保证了 **不使用 API 时 CLI 能力不变**，并且可按需启用远端增强。
+
 ---
 
 ## CI 与契约
@@ -161,6 +178,8 @@ sop-to-skill version                                          # 版本信息
 ## Agent 集成
 
 完整集成指南见：`docs/agent-integration.md`
+
+远端 API 平台（Orchestrator）对接项目：`https://github.com/zealot00/managing-up`
 
 ---
 
