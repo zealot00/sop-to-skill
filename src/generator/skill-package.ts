@@ -23,13 +23,13 @@ export async function generateSkillPackage(
     },
     triggers: buildTriggers(),
     steps: buildSteps(extracted),
-    constraints: extracted.constraints.map((c) => ({
-      id: c.id || `CONST-${Math.random().toString(36).substr(2, 9)}`,
+    constraints: extracted.constraints.map((c, i) => ({
+      id: normalizeConstraintId(c.id || `CONST-${String(i + 1).padStart(3, '0')}`),
       level: (c.level || 'SHOULD') as ConstraintLevel,
       description: c.description,
       condition: c.condition,
       action: c.action,
-      roles: c.roles,
+      roles: c.roles.length > 0 ? c.roles : ['unspecified'],
       confidence: c.confidence || 0.85,
     })) as Constraint[],
     decisions: extracted.decisions as any,
@@ -57,13 +57,14 @@ function buildTriggers() {
 function buildSteps(extracted: ExtractedData): Step[] {
   const mustConstraints = extracted.constraints.filter((c) => c.level === 'MUST');
   return mustConstraints.slice(0, 5).map((c, i): Step => ({
-    id: `step_${i + 1}`,
+    id: `STEP-${String(i + 1).padStart(3, '0')}`,
     name: c.condition || `执行约束 ${c.id}`,
     description: c.description,
+    action: `validate_constraint_${c.id}`,
     type: 'condition',
     condition: c.condition || c.description,
-    input: {},
-    output: { valid: 'boolean', violations: [] },
+    input: [],
+    output: [],
     on_failure: i > 0 ? 'abort' : undefined,
   }));
 }
@@ -79,4 +80,13 @@ function buildErrorHandling(extracted: ExtractedData) {
     }
   }
   return { rules: errorRules };
+}
+
+function normalizeConstraintId(id: string): string {
+  // Ensure ID matches format CONST-XXX (uppercase, alphanumeric after dash)
+  const clean = id.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (clean.startsWith('CONST')) {
+    return `CONST-${clean.slice(5) || '001'}`;
+  }
+  return `CONST-${clean || '001'}`;
 }

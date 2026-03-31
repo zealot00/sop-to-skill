@@ -81,20 +81,23 @@ export interface StepOutput {
 
 /**
  * Step - a single step in the skill workflow
- * Compatible with SEH engine: id, type, tool_ref, condition
+ * Compatible with SKILL.schema.json
  */
 export interface Step {
   id: string;
   name: string;
   description: string;
   type: 'tool' | 'approval' | 'condition';
+  action?: string;
   tool_ref?: string;
   condition?: string;
   approver_group?: string;
   message?: string;
-  input?: StepInput[] | Record<string, unknown>;
-  output?: StepOutput[] | Record<string, unknown>;
+  input?: StepInput[];
+  output?: StepOutput[];
   on_failure?: string;
+  next_step_on_success?: string;
+  next_step_on_failure?: string;
 }
 
 /**

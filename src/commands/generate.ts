@@ -58,10 +58,10 @@ export default class GenerateCommand extends Command {
       const skillMd = generateSkillMarkdown(skillPackage.schema);
       await fs.writeFile(path.join(this.outputDir, 'SKILL.md'), skillMd, 'utf-8');
 
-      // Write skill.schema.json (machine-readable schema)
+      // Write skill.schema.json (complete package - machine-readable schema + manifest)
       await fs.writeFile(
         path.join(this.outputDir, 'skill.schema.json'),
-        JSON.stringify(skillPackage.schema, null, 2),
+        JSON.stringify(skillPackage, null, 2),
         'utf-8'
       );
 

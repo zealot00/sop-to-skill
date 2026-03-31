@@ -67,22 +67,24 @@ describe('Types', () => {
   describe('Step', () => {
     it('should accept valid step objects', () => {
       const step: Step = {
-        id: 'S001',
+        id: 'STEP-S001',
         name: 'Verify Data',
         description: 'Verify the input data is valid',
+        type: 'tool',
         action: 'validate_data',
-        next_step_on_success: 'S002',
-        next_step_on_failure: 'S003',
+        next_step_on_success: 'STEP-S002',
+        next_step_on_failure: 'STEP-S003',
       };
-      expect(step.id).toBe('S001');
+      expect(step.id).toBe('STEP-S001');
       expect(step.action).toBe('validate_data');
     });
 
     it('should accept optional input and output', () => {
       const step: Step = {
-        id: 'S002',
+        id: 'STEP-S002',
         name: 'Process Data',
         description: 'Process the verified data',
+        type: 'tool',
         action: 'process_data',
         input: [
           { name: 'data', type: 'object', required: true },
@@ -105,8 +107,8 @@ describe('Types', () => {
         outputVars: ['approval_result'],
         rules: [
           {
-            condition: 'data.amount < 1000',
-            output: { approval_result: 'approved' },
+            when: { condition: 'data.amount < 1000' },
+            then: { approval_result: 'approved' },
             priority: 1,
           },
         ],
@@ -129,9 +131,10 @@ describe('Types', () => {
         ],
         steps: [
           {
-            id: 'S001',
+            id: 'STEP-S001',
             name: 'Verify Data',
             description: 'Verify input data',
+            type: 'tool',
             action: 'verify',
           },
         ],
@@ -202,7 +205,7 @@ describe('Types', () => {
       expect(result.schema.meta.description).toBe('Generated from test.md');
       
       expect(result.schema.constraints).toHaveLength(1);
-      expect(result.schema.constraints[0].id).toBe('C001');
+      expect(result.schema.constraints[0].id).toBe('CONST-C001');
       
       expect(result.manifest.format_version).toBe('1.0.0');
       expect(result.manifest.generator).toBe('sop-to-skill');
