@@ -4,6 +4,12 @@ import { generateFromExtracted } from './api-client.js';
 export default class ExtractCommand extends Command {
   public inputFile = Option.String();
   public outputFormat = Option.String('--format', 'json');
+  public configPath = Option.String('--config', { description: 'Path to generator config JSON (for extraction options)' });
+  public lenientConfig = Option.Boolean('--lenient-config', false, { description: 'Fallback to defaults when config is invalid' });
+  public extractLanguage = Option.String('--extract-language', { description: 'Override extraction language: auto|zh|en' });
+  public extractThreshold = Option.String('--extract-threshold', { description: 'Override extraction confidence threshold (0-1)' });
+  public roleConfigPath = Option.String('--role-config', { description: 'Path to role config JSON' });
+  public noBoundary = Option.Boolean('--no-boundary', false, { description: 'Disable boundary detection' });
   public generate = Option.Boolean('--generate', false, {
     description: 'Call managing-up API to generate complete Skill YAML',
   });
@@ -28,9 +34,27 @@ export default class ExtractCommand extends Command {
     try {
       const { parseInputFile } = await import('../parser/factory.js');
       const { extractFromText } = await import('../extractor/index.js');
+      const { loadGeneratorConfig } = await import('../config/generator-config.js');
+
+      const generatorConfig = await loadGeneratorConfig(this.configPath, { strict: !this.lenientConfig });
+      const thresholdOverride = this.extractThreshold !== undefined ? Number(this.extractThreshold) : undefined;
+      if (thresholdOverride !== undefined && (Number.isNaN(thresholdOverride) || thresholdOverride < 0 || thresholdOverride > 1)) {
+        this.context.stdout.write('Error: --extract-threshold must be a number between 0 and 1\n');
+        return 1;
+      }
+      const language = this.extractLanguage || generatorConfig.extraction.language;
+      if (!['auto', 'zh', 'en'].includes(language)) {
+        this.context.stdout.write('Error: --extract-language must be one of auto|zh|en\n');
+        return 1;
+      }
 
       const parsed = await parseInputFile(this.inputFile);
-      const extracted = extractFromText(parsed.content);
+      const extracted = extractFromText(parsed.content, {
+        language: language === 'auto' ? undefined : (language as 'zh' | 'en'),
+        confidenceThreshold: thresholdOverride ?? generatorConfig.extraction.confidenceThreshold,
+        roleConfigPath: this.roleConfigPath || generatorConfig.extraction.roleConfigPath,
+        enableBoundaryDetection: this.noBoundary ? false : generatorConfig.extraction.enableBoundaryDetection,
+      });
 
       // If no --generate, output JSON (backward compatible)
       if (!this.generate) {

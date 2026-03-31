@@ -127,8 +127,11 @@ sop-to-skill generate <input> --name "xxx" --output <dir> --framework codex     
 sop-to-skill generate <input> --name "xxx" --output <dir> --framework all          # 生成全部框架产物
 sop-to-skill generate <input> --name "xxx" --output <dir> --config ./generator.json # 配置化输出文件名/元数据
 sop-to-skill generate <input> --name "xxx" --output <dir> --config ./generator.json --lenient-config # 配置异常时降级默认
+sop-to-skill generate <input> --output <dir> --extract-language zh --extract-threshold 0.8 # 覆盖提取策略
 sop-to-skill extract <input>                                  # 提取数据
+sop-to-skill extract <input> --config ./generator.json --role-config ./role-config.json # 提取层配置化
 sop-to-skill llm-enhance <input> --llm-api http://xxx         # LLM 增强（预留）
+sop-to-skill llm-enhance <input> --extract-language en --no-boundary # LLM增强前提取控制
 sop-to-skill validate <dir> --config ./generator.json         # 按相同配置验证包结构
 sop-to-skill validate <dir> --config ./generator.json --lenient-config # 配置异常时降级默认校验
 sop-to-skill version                                          # 版本信息
@@ -138,12 +141,26 @@ sop-to-skill version                                          # 版本信息
 
 `--config` 支持三类关键控制：
 
+- `extraction`：控制语言、置信阈值、角色配置路径、是否启用边界提取
 - `progressive`：控制是否默认启用渐进式、是否输出 `SKILL.full.md`、是否输出 `constraints/` 细节目录
 - `framework`：控制 `--framework all` 时允许输出的框架白名单
 - `output`：控制核心产物文件名（`skillFileName` / `schemaFileName` / `manifestFileName` 等）
 
 默认是**严格配置校验**：配置文件存在但格式非法时直接报错（防止静默生成错误产物）。  
 只有显式传 `--lenient-config` 才会自动回退到默认配置。
+
+---
+
+## CI 与契约
+
+- CI 会执行：`typecheck` + `unit tests` + `build` + `generate+validate` 端到端 smoke
+- 契约测试会检查 `SKILL.schema.json` 与运行时校验器（Zod）在关键字段上的一致性（DecisionRule / ErrorHandling / Step）
+
+---
+
+## Agent 集成
+
+完整集成指南见：`docs/agent-integration.md`
 
 ---
 

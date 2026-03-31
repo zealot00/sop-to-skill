@@ -14,6 +14,10 @@ export default class GenerateCommand extends Command {
   public framework = Option.String('--framework', { description: 'Target framework (run `generate --framework all` to export all supported frameworks)' });
   public configPath = Option.String('--config', { description: 'Path to generator config JSON' });
   public lenientConfig = Option.Boolean('--lenient-config', false, { description: 'Fallback to defaults when config is invalid' });
+  public extractLanguage = Option.String('--extract-language', { description: 'Override extraction language: auto|zh|en' });
+  public extractThreshold = Option.String('--extract-threshold', { description: 'Override extraction confidence threshold (0-1)' });
+  public roleConfigPath = Option.String('--role-config', { description: 'Path to role config JSON' });
+  public noBoundary = Option.Boolean('--no-boundary', false, { description: 'Disable boundary detection' });
 
   static paths = [['generate']];
 
@@ -47,8 +51,23 @@ export default class GenerateCommand extends Command {
       const { getSupportedFrameworks, resolveFramework } = await import('../generator/frameworks.js');
 
       const parsed = await parseInputFile(this.inputFile);
-      const extracted = extractFromText(parsed.content);
       const generatorConfig = await loadGeneratorConfig(this.configPath, { strict: !this.lenientConfig });
+      const thresholdOverride = this.extractThreshold !== undefined ? Number(this.extractThreshold) : undefined;
+      if (thresholdOverride !== undefined && (Number.isNaN(thresholdOverride) || thresholdOverride < 0 || thresholdOverride > 1)) {
+        this.context.stdout.write('Error: --extract-threshold must be a number between 0 and 1\n');
+        return 1;
+      }
+      const language = this.extractLanguage || generatorConfig.extraction.language;
+      if (!['auto', 'zh', 'en'].includes(language)) {
+        this.context.stdout.write('Error: --extract-language must be one of auto|zh|en\n');
+        return 1;
+      }
+      const extracted = extractFromText(parsed.content, {
+        language: language === 'auto' ? undefined : (language as 'zh' | 'en'),
+        confidenceThreshold: thresholdOverride ?? generatorConfig.extraction.confidenceThreshold,
+        roleConfigPath: this.roleConfigPath || generatorConfig.extraction.roleConfigPath,
+        enableBoundaryDetection: this.noBoundary ? false : generatorConfig.extraction.enableBoundaryDetection,
+      });
       const progressiveEnabled = this.progressive ? this.progressive !== 'legacy' : generatorConfig.progressive.enabledByDefault;
       if (this.verbose) {
         this.context.stdout.write(`Progressive disclosure: ${progressiveEnabled ? 'enabled' : 'disabled'}\n`);

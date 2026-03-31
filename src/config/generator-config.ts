@@ -16,6 +16,12 @@ export interface GeneratorConfig {
     maxGeneratedSteps: number;
     defaultTriggers: Trigger[];
   };
+  extraction: {
+    language: 'auto' | 'zh' | 'en';
+    confidenceThreshold: number;
+    roleConfigPath?: string;
+    enableBoundaryDetection: boolean;
+  };
   progressive: {
     enabledByDefault: boolean;
     detailLevel: 'minimal' | 'summary' | 'full';
@@ -40,6 +46,7 @@ type PartialConfig = {
     maxGeneratedSteps?: number;
     defaultTriggers?: Trigger[];
   };
+  extraction?: Partial<GeneratorConfig['extraction']>;
   progressive?: Partial<GeneratorConfig['progressive']>;
   framework?: Partial<GeneratorConfig['framework']>;
   output?: Partial<GeneratorConfig['output']>;
@@ -63,6 +70,12 @@ const GeneratorConfigSchema = z.object({
   schema: z.object({
     maxGeneratedSteps: z.number().int().min(1).max(200),
     defaultTriggers: z.array(TriggerSchema).min(1),
+  }),
+  extraction: z.object({
+    language: z.enum(['auto', 'zh', 'en']),
+    confidenceThreshold: z.number().min(0).max(1),
+    roleConfigPath: z.string().min(1).optional(),
+    enableBoundaryDetection: z.boolean(),
   }),
   progressive: z.object({
     enabledByDefault: z.boolean(),
@@ -132,9 +145,14 @@ export async function loadGeneratorConfig(configPath?: string, options?: LoadCon
       maxGeneratedSteps: 8,
       defaultTriggers: [{
         type: 'execution',
-        name: 'execute',
         description: 'Execute the skill',
       }],
+    },
+    extraction: {
+      language: 'auto',
+      confidenceThreshold: 0.7,
+      roleConfigPath: undefined,
+      enableBoundaryDetection: true,
     },
     progressive: {
       enabledByDefault: true,
@@ -170,6 +188,10 @@ export async function loadGeneratorConfig(configPath?: string, options?: LoadCon
       schema: {
         maxGeneratedSteps: custom.schema?.maxGeneratedSteps ?? defaults.schema.maxGeneratedSteps,
         defaultTriggers: custom.schema?.defaultTriggers ?? defaults.schema.defaultTriggers,
+      },
+      extraction: {
+        ...defaults.extraction,
+        ...(custom.extraction || {}),
       },
       progressive: {
         ...defaults.progressive,

@@ -51,11 +51,14 @@ export async function generateSkillPackage(
 
 function buildTriggers(config?: Pick<GeneratorConfig, 'schema'>) {
   if (config?.schema.defaultTriggers && config.schema.defaultTriggers.length > 0) {
-    return config.schema.defaultTriggers;
+    return config.schema.defaultTriggers.map((t) => ({
+      type: t.type,
+      description: t.description,
+      condition: t.condition,
+    }));
   }
   return [{
     type: 'execution' as TriggerType,
-    name: 'execute',
     description: 'Execute the skill',
   }];
 }

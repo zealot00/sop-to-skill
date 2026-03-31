@@ -11,10 +11,15 @@
     "defaultTriggers": [
       {
         "type": "execution",
-        "name": "execute",
         "description": "Execute the skill"
       }
     ]
+  },
+  "extraction": {
+    "language": "auto",
+    "confidenceThreshold": 0.7,
+    "roleConfigPath": "role-config.json",
+    "enableBoundaryDetection": true
   },
   "progressive": {
     "enabledByDefault": true,
