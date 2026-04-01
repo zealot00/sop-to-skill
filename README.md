@@ -159,6 +159,17 @@ sop-to-skill version                                          # 版本信息
 - `--api-strategy local_only|remote_first|remote_only`（默认 `local_only`）
 - `--api-timeout-ms`
 
+Orchestrator 地址与 JWT Token 支持以下环境变量（按顺序回退）：
+- Base URL: `SOP_TO_SKILL_ORCHESTRATOR_API` 或 `MANAGING_UP_BASE_URL`
+- Token: `SOP_TO_SKILL_ORCHESTRATOR_TOKEN` 或 `MANAGING_UP_JWT_TOKEN` 或 `MANAGING_UP_TOKEN`
+
+示例：
+```bash
+export MANAGING_UP_BASE_URL=http://localhost:8080
+export MANAGING_UP_JWT_TOKEN=<your-jwt-token>
+sop-to-skill generate ./examples/sample.md -o ./out --api-strategy remote_first
+```
+
 策略说明：
 - `local_only`：仅本地能力（当前默认能力）
 - `remote_first`：优先远端增强，失败自动降级本地
@@ -172,7 +183,8 @@ sop-to-skill version                                          # 版本信息
 
 - CI 会执行：`typecheck` + `unit tests` + `build` + `generate+validate` 端到端 smoke
 - 契约测试会检查 `SKILL.schema.json` 与运行时校验器（Zod）在关键字段上的一致性（DecisionRule / ErrorHandling / Step）
-- 本地 API 烟测：`npm run test:api-smoke`（默认请求 `http://localhost:8080`，可用 `ORCH_BASE_URL` 覆盖）
+- 本地 API 烟测：`npm run test:api-smoke`（默认请求 `http://localhost:8080`，可用 `ORCH_BASE_URL` 与 `ORCH_TOKEN` 覆盖）
+- 本地 CLI 调用 API 烟测：`npm run test:cli-api-smoke`（通过 `sop-to-skill orchestrator` 验证 JWT 链路，支持 `ORCH_BASE_URL` / `ORCH_TOKEN`）
 
 ---
 

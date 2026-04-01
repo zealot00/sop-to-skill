@@ -8,8 +8,8 @@ Recommended remote orchestrator implementation:
 ## Global flags
 
 - `--op` operation name
-- `--base-url` orchestrator base URL (or env `SOP_TO_SKILL_ORCHESTRATOR_API`)
-- `--token` bearer token (or env `SOP_TO_SKILL_ORCHESTRATOR_TOKEN`)
+- `--base-url` orchestrator base URL (env fallback: `SOP_TO_SKILL_ORCHESTRATOR_API`, `MANAGING_UP_BASE_URL`)
+- `--token` bearer token (env fallback: `SOP_TO_SKILL_ORCHESTRATOR_TOKEN`, `MANAGING_UP_JWT_TOKEN`, `MANAGING_UP_TOKEN`)
 - `--timeout-ms` request timeout
 - `--payload` JSON payload file path
 - `--idempotency-key` idempotency key for write APIs
@@ -25,15 +25,19 @@ Recommended remote orchestrator implementation:
 ## Examples
 
 ```bash
+# use env-based JWT auth
+export MANAGING_UP_BASE_URL=http://localhost:8080
+export MANAGING_UP_JWT_TOKEN=<your-jwt-token>
+
 # health
-sop-to-skill orchestrator --op health --base-url http://localhost:8080
+sop-to-skill orchestrator --op health
 
 # create run
-sop-to-skill orchestrator --op create-run --base-url http://localhost:8080 --payload ./payloads/create-run.json
+sop-to-skill orchestrator --op create-run --payload ./payloads/create-run.json
 
 # get run status
-sop-to-skill orchestrator --op get-run --base-url http://localhost:8080 --run-id run_123
+sop-to-skill orchestrator --op get-run --run-id run_123
 
 # diff versions
-sop-to-skill orchestrator --op diff-versions --base-url http://localhost:8080 --skill-id skill_data_verification --from 1.0.0 --to 1.1.0
+sop-to-skill orchestrator --op diff-versions --skill-id skill_data_verification --from 1.0.0 --to 1.1.0
 ```

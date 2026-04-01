@@ -1,6 +1,7 @@
 import { Command, Option } from 'clipanion';
 import type { ExtractedData } from '../types/index.js';
 import { resolveExtraction } from './extraction-resolver.js';
+import { resolveOrchestratorApi, resolveOrchestratorToken } from './orchestrator-env.js';
 
 export default class LLMEnhanceCommand extends Command {
   public inputFile = Option.String();
@@ -12,8 +13,8 @@ export default class LLMEnhanceCommand extends Command {
   public extractThreshold = Option.String('--extract-threshold', { description: 'Override extraction confidence threshold (0-1)' });
   public roleConfigPath = Option.String('--role-config', { description: 'Path to role config JSON' });
   public noBoundary = Option.Boolean('--no-boundary', false, { description: 'Disable boundary detection' });
-  public orchestratorApi = Option.String('--orchestrator-api', { description: 'Orchestrator API base URL' });
-  public orchestratorToken = Option.String('--orchestrator-token', { description: 'Orchestrator API bearer token' });
+  public orchestratorApi = Option.String('--orchestrator-api', { description: 'Orchestrator API base URL (env: SOP_TO_SKILL_ORCHESTRATOR_API|MANAGING_UP_BASE_URL)' });
+  public orchestratorToken = Option.String('--orchestrator-token', { description: 'Orchestrator API bearer token (env: SOP_TO_SKILL_ORCHESTRATOR_TOKEN|MANAGING_UP_JWT_TOKEN|MANAGING_UP_TOKEN)' });
   public apiStrategy = Option.String('--api-strategy', 'local_only', { description: 'Extraction strategy: local_only|remote_first|remote_only' });
   public apiTimeoutMs = Option.String('--api-timeout-ms', '8000', { description: 'Orchestrator API timeout in milliseconds' });
   public verbose = Option.Boolean('-v,--verbose', false);
@@ -69,8 +70,8 @@ export default class LLMEnhanceCommand extends Command {
         }),
         {
           strategy: this.apiStrategy as 'local_only' | 'remote_first' | 'remote_only',
-          orchestratorApi: this.orchestratorApi || process.env.SOP_TO_SKILL_ORCHESTRATOR_API,
-          orchestratorToken: this.orchestratorToken || process.env.SOP_TO_SKILL_ORCHESTRATOR_TOKEN,
+          orchestratorApi: resolveOrchestratorApi(this.orchestratorApi),
+          orchestratorToken: resolveOrchestratorToken(this.orchestratorToken),
           apiTimeoutMs: timeoutMs,
           language: language as 'auto' | 'zh' | 'en',
           confidenceThreshold: thresholdOverride ?? generatorConfig.extraction.confidenceThreshold,

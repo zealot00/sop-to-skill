@@ -57,6 +57,10 @@ Commands also support orchestrator enhancement:
 - `--api-strategy local_only|remote_first|remote_only`
 - `--api-timeout-ms`
 
+Env fallback for API/JWT:
+- `SOP_TO_SKILL_ORCHESTRATOR_API` or `MANAGING_UP_BASE_URL`
+- `SOP_TO_SKILL_ORCHESTRATOR_TOKEN` or `MANAGING_UP_JWT_TOKEN` or `MANAGING_UP_TOKEN`
+
 Recommended for production: `remote_first`.
 This preserves local fallback and avoids hard downtime when remote API is unavailable.
 

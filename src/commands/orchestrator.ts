@@ -1,6 +1,12 @@
 import { Command, Option } from 'clipanion';
 import fs from 'fs/promises';
 import { OrchestratorClient } from '../orchestrator/client.js';
+import {
+  ORCHESTRATOR_API_ENV_HINT,
+  ORCHESTRATOR_TOKEN_ENV_HINT,
+  resolveOrchestratorApi,
+  resolveOrchestratorToken,
+} from './orchestrator-env.js';
 
 type OrchestratorOp =
   | 'health'
@@ -21,10 +27,10 @@ type OrchestratorOp =
 export default class OrchestratorCommand extends Command {
   public op = Option.String('--op', { required: true });
   public baseUrl = Option.String('--base-url', {
-    description: 'Orchestrator API base URL (env: SOP_TO_SKILL_ORCHESTRATOR_API)',
+    description: `Orchestrator API base URL (env: ${ORCHESTRATOR_API_ENV_HINT})`,
   });
   public token = Option.String('--token', {
-    description: 'Orchestrator API bearer token (env: SOP_TO_SKILL_ORCHESTRATOR_TOKEN)',
+    description: `Orchestrator API bearer token (env: ${ORCHESTRATOR_TOKEN_ENV_HINT})`,
   });
   public timeoutMs = Option.String('--timeout-ms', '8000');
   public payloadPath = Option.String('--payload', { description: 'Path to JSON payload file' });
@@ -41,12 +47,12 @@ export default class OrchestratorCommand extends Command {
   async execute(): Promise<number> {
     try {
       const op = this.op as OrchestratorOp;
-      const baseUrl = this.baseUrl || process.env.SOP_TO_SKILL_ORCHESTRATOR_API;
-      const token = this.token || process.env.SOP_TO_SKILL_ORCHESTRATOR_TOKEN;
+      const baseUrl = resolveOrchestratorApi(this.baseUrl);
+      const token = resolveOrchestratorToken(this.token);
       const timeoutMs = Number(this.timeoutMs);
 
       if (!baseUrl) {
-        this.context.stdout.write('Error: --base-url is required (or set SOP_TO_SKILL_ORCHESTRATOR_API)\n');
+        this.context.stdout.write(`Error: --base-url is required (or set ${ORCHESTRATOR_API_ENV_HINT})\n`);
         return 1;
       }
       if (Number.isNaN(timeoutMs) || timeoutMs <= 0) {
